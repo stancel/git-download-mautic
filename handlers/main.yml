@@ -1,0 +1,37 @@
+---
+# handlers file for git-download-mautic
+
+- name: restart-apache
+  service: name=apache2 state=restarted
+
+- name: clear-mautic-cache
+  become: true
+  become_method: sudo
+  shell: "rm -rf /var/www/html/app/cache/*"
+  listen: "finish-mautic-permissions"
+
+- name: "Set ownership to Apache webuser"
+  become: true
+  become_method: sudo
+  shell: "chown -R www-data:www-data /var/www/html"
+  listen: "finish-mautic-permissions"
+
+- name: "Set ownership to root for Git files and directory"
+  become: true
+  become_method: sudo
+  shell: "chown -R root:root /var/www/html/.git /var/www/html/.github /var/www/html/.gitignore"
+  listen: "finish-mautic-permissions"
+
+- name: "Make Mautic Cache writable and executable"
+  become: true
+  become_method: sudo
+  shell: "chmod -R 755 /var/www/html/app/cache"
+  listen: "finish-mautic-permissions"
+
+- name: "Restart Apache for good measure"
+  become: true
+  become_method: sudo
+  service: name=apache2 state=restarted
+  listen: "finish-mautic-permissions"
+
+

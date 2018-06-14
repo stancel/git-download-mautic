@@ -1,0 +1,51 @@
+---
+# vars file for git-download-mautic
+
+#####     Required Variables      #####
+# Fill in appropriate values below unless passing from a higher precedence
+
+# Choose the git tagged release that you would like to download and install. Comment this out if using a git branch instead.
+tagged_release_version: "2.13.1"
+
+# Is this a Mautic Dev or Staging Environment? Cron jobs will not be setup for a Dev environment in case you are importing a database from production and do not want to sync your Mautic integrations from a DEV/QA environment to integrated production systems.
+mautic_dev_env: "no"
+
+# The git repo to use when downloading and installing SuiteCRM
+git_repo: "https://github.com/mautic/mautic.git"
+
+# If you are using your own forked repo an want to use a branch instead of a tagged release then fill in a value and comment out the "tagged_release_version" variable 
+git_branch: ""
+
+# The database to create when setting up Mautic
+db_name: "mautic"
+
+# The DB user to create when to be used by the Mautic application
+db_user: "mauticDbUser"
+
+# The password for the DB user being created
+db_password: "some-long-good-password"
+
+# The root password for your MySQL, MariaDB or Percona Server DB instance to create the DB and user.
+mysql_root_password: "your MySQL root password"
+
+
+#####     Optional Variables      #####
+
+# These variables are set with the below defaults in defaults/main.yml. 
+# Only uncomment and change them or pass values if you would like
+
+# The default git repo to use when downloading and installing Mautic
+#git_repo: "https://github.com/mautic/mautic.git"
+
+# The database to create when setting up Mautic
+#db_name: "mautic"
+
+# Are you restoring your Mautic from another environment?
+#mautic_restore: "no"  - Not yet implemented
+
+# Do you want to deploy the FB Leads and FB Custom Audience plugins? (currently not working)
+#deploy_custom_plugins: "no" - Not yet implemented
+
+
+
+

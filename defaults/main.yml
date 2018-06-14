@@ -1,0 +1,18 @@
+---
+# defaults file for git-download-mautic
+
+# The default git repo to use when downloading and installing Mautic
+git_repo: "https://github.com/mautic/mautic.git"
+
+# The database to create when setting up Mautic
+db_name: "mautic"
+
+# Are you restoring your Mautic from another environment?
+#mautic_restore: "no"  - Not yet implemented
+
+# Do you want to deploy the FB Leads and FB Custom Audience plugins? (currently not working)
+#deploy_custom_plugins: "no" - Not yet implemented
+
+
+
+

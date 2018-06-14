@@ -1,0 +1,332 @@
+---
+# tasks file for git-download-mautic
+
+- name: "Install Git and other needed packages"
+  apt: name={{ item }} update_cache=yes 
+  with_items: 
+  - git
+  - php7.0
+  - php7.0-mbstring
+  - php7.0-mysql
+  - libapache2-mod-php7.0
+  - php7.0-mcrypt
+  - php7.0-curl
+  - php7.0-json
+  - php7.0-sqlite3
+  - php7.0-zip
+  - php7.0-xml
+  - php-imap
+  - php7.0-bcmath
+  - php7.0-intl
+  - php7.0-odbc
+  - php7.0-soap
+  notify: 
+  - restart-apache
+
+- name: 'Upgrade APT to the lastest packages'
+  action: apt upgrade=safe
+
+- name: "Clearing out existing web directory"
+  file: 
+    state: absent 
+    path: /var/www/html/
+
+- name: "Re-creating html directory"
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0644
+    recurse: yes
+
+- name: "Git clone the repo"
+  command: git clone {{ git_repo }} html
+  args: 
+    chdir: /var/www
+
+- name: Debugging the git_branch variable
+  debug: var=git_branch
+
+- name: Debugging the tagged_release_version variable
+  debug: var=tagged_release_version
+
+- name: "Checkout the desired release"
+  command: git checkout {{ tagged_release_version }}
+  args: 
+    chdir: /var/www/html
+  when: tagged_release_version != ""
+
+- name: "Checkout the desired branch"
+  command: git checkout {{ git_branch }}
+  args: 
+    chdir: /var/www/html
+  when: git_branch != ""
+
+- name: "Setting ownership and permissions for web directory"
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: 0755
+    recurse: yes
+  notify: restart-apache
+
+- name: "Setting ownership and permissions for web directory"
+  file:
+    path: /var/www/html/.git
+    state: directory
+    owner: root
+    group: root
+    mode: 0640
+    recurse: yes
+
+- name: "Setting ownership and permissions for web directory"
+  file:
+    path: /var/www/html/.gitignore
+    state: file
+    owner: root
+    group: root
+    mode: 0640
+
+- name: "Install Composer program"
+  script: ../files/install_composer.sh
+  args: 
+    creates: /usr/local/bin/composer
+
+# - name: "Install Composer packages"
+#   composer: 
+#     command: install
+#     working_dir: /var/www/html
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: MySQLi
+    option: mysqli.allow_local_infile
+    value: 0
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: memory_limit
+    value: 756M
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: post_max_size
+    value: 64M
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: upload_max_filesize
+    value: 64M
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: max_input_time
+    value: 60
+
+- name: "Changing PHP ini file options"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: max_execution_time
+    value: 300
+
+# Do not adjust the timezone or the integrations have issues - Leaving this here as a reminder
+#- name: "Changing PHP ini file options"
+#  ini_file: 
+#    path: /etc/php/7.0/apache2/php.ini
+#    section: PHP
+#    option: date.timezone
+#    value: America/New_York
+
+# Removing this temporarily since the local.php file has confidential data in it
+#- name: "Deploying Mautic Config Script with Settings"
+#  template:
+#    src: ../templates/local.php
+#    dest: /var/www/html/app/config/local.php
+#    owner: www-data
+#    group: www-data
+#    mode: 0644
+#  when: mautic_restore == "yes"
+
+- name: "Install Python MySQL bindings required for Ansible MySQL module"
+  apt: name=python-mysqldb state=installed
+
+- name: MYSQL | Create {{db_name}} database
+  mysql_db:
+    name: "{{ db_name }}"
+    login_password: "{{ mysql_root_password }}"
+    state: present
+    collation: "utf8_unicode_ci"
+
+- name: MYSQL | Create {{db_name}} user
+  mysql_user:
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    host: '%'
+    priv: '{{ db_name }}.*:TRIGGER,CREATE ROUTINE,CREATE TEMPORARY TABLES,CREATE VIEW,ALTER ROUTINE,REFERENCES,EVENT,SHOW VIEW,EXECUTE,ALTER,DROP,CREATE,INDEX,SELECT,INSERT,UPDATE,DELETE'
+    state: present
+
+- composer:
+    command: install
+    working_dir: /var/www/html
+  notify: finish-mautic-permissions
+
+#- block:
+#
+#    - name: "Deploy FB Ads to Leads Mautic Plugin"
+#      git:
+#        repo: 'https://github.com/stancel/MauticFBAdsCustomAudiencesBundle.git'
+#        dest: /var/www/html/plugins/MauticFBAdsCustomAudiencesBundle
+#        version: master
+#
+#    - name: "Deploy FB Ads to Leads Mautic Plugin"
+#      git:
+#        repo: 'https://github.com/stancel/MauticFBAdsLeadAdsBundle.git'
+#        dest: /var/www/html/plugins/MauticFBAdsLeadAdsBundle
+#        version: master
+#
+#  when: deploy_custom_plugins == "yes"
+
+
+- block:
+    - name: "Setup cron job for Processing Mautic Webhooks"
+      cron:
+        user: www-data
+        name: "mautic:webhooks:process"
+        minute: "0,10,20,30,40,50"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:webhooks:process > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Segment Updates"
+      cron:
+        user: www-data
+        name: "mautic:segments:update"
+        minute: "2,12,22,32,42,52"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:segments:update > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Campaigns"
+      cron:
+        user: www-data
+        name: "mautic:campaigns:rebuild"
+        minute: "4,14,24,34,44,54"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:campaigns:rebuild > /dev/null 2>&1"
+
+    - name: "Setup cron job for Triggering Mautic Campaigns"
+      cron:
+        user: www-data
+        name: "mautic:campaigns:trigger"
+        minute: "6,16,26,36,46,56"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:campaigns:trigger > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Sending Emails"
+      cron:
+        user: www-data
+        name: "mautic:emails:send"
+        minute: "1,11,21,31,41,51"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:emails:send > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Fetching Emails"
+      cron:
+        user: www-data
+        name: "mautic:email:fetch"
+        minute: "3,13,23,33,44,54"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:email:fetch > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Social Monitoring"
+      cron:
+        user: www-data
+        name: "mautic:social:monitoring"
+        minute: "2,12,22,32,42,52"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:social:monitoring > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic IP Lookup Download"
+      cron:
+        user: www-data
+        name: "mautic:iplookup:download"
+        minute: "5,15,25,35,45,55"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:iplookup:download > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Maintenance Cleanup"
+      cron:
+        user: www-data
+        name: "mautic:maintenance:cleanup"
+        minute: "0"
+        hour: "2"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:maintenance:cleanup --days-old=365 > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Send Broadcasts"
+      cron:
+        user: www-data
+        name: "mautic:broadcasts:send"
+        minute: "7,17,27,37,47,57"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:broadcasts:send > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Fetching SuiteCRM Leads"
+      cron:
+        user: www-data
+        name: "Fetch Sugarcrm Leads"
+        minute: "*"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php /var/www/html/app/console mautic:integration:fetchleads --integration=Sugarcrm"
+    
+  # Only execute the above task block to setup cron jobs if it is a PROD environment 
+  when: mautic_dev_env == "no"
+
+
+
+
+
