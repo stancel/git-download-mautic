@@ -19,14 +19,15 @@ galaxy_info:
     - xenial
   - name: Debian
     versions:
-    - 7
-    - 8
-    - 9
+    - wheezy
+    - jessie
+    - stretch
 
   galaxy_tags: 
     - mautic
     - apache2
     - php7
+    - automation
 
 dependencies: 
   - stancel.apache-webserver
