@@ -29,5 +29,4 @@ galaxy_info:
     - php7
     - automation
 
-dependencies: 
-  - stancel.apache-webserver
+dependencies: []

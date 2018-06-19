@@ -7,23 +7,11 @@
 # Choose the git tagged release that you would like to download and install. Comment this out if using a git branch instead.
 tagged_release_version: "2.13.1"
 
-# Is this a Mautic Dev or Staging Environment? Cron jobs will not be setup for a Dev environment in case you are importing a database from production and do not want to sync your Mautic integrations from a DEV/QA environment to integrated production systems.
-mautic_dev_env: "no"
-
-# The git repo to use when downloading and installing SuiteCRM
-git_repo: "https://github.com/mautic/mautic.git"
-
-# If you are using your own forked repo an want to use a branch instead of a tagged release then fill in a value and comment out the "tagged_release_version" variable 
-git_branch: ""
-
-# The database to create when setting up Mautic
-db_name: "mautic"
-
 # The DB user to create when to be used by the Mautic application
 db_user: "mauticDbUser"
 
 # The password for the DB user being created
-db_password: "some-long-good-password"
+db_password: "some-really-secure-password"
 
 # The root password for your MySQL, MariaDB or Percona Server DB instance to create the DB and user.
 mysql_root_password: "your MySQL root password"
@@ -37,14 +25,23 @@ mysql_root_password: "your MySQL root password"
 # The default git repo to use when downloading and installing Mautic
 #git_repo: "https://github.com/mautic/mautic.git"
 
+# If you are using your own forked repo an want to use a branch instead of a tagged release then fill in a value and comment out the "tagged_release_version" variable 
+#git_branch: ""
+
 # The database to create when setting up Mautic
 #db_name: "mautic"
 
-# Are you restoring your Mautic from another environment?
-#mautic_restore: "no"  - Not yet implemented
+# Is this a Mautic Dev or Staging Environment? Cron jobs will not be setup for a Dev environment in case you are importing a database from production and do not want to sync your Mautic integrations from a DEV/QA environment to integrated production systems.
+#mautic_dev_env: "no"
 
-# Do you want to deploy the FB Leads and FB Custom Audience plugins? (currently not working)
-#deploy_custom_plugins: "no" - Not yet implemented
+# The Document Root or file path where Mantis files will be stored and served up by your webserver. The default path is "/var/www/html" and assumes you are running Apache2 on Debian or Ubuntu
+#web_files_path: "/var/www/html"
+
+# The linux username used by your webserver. The default value is "www-data" which assumes Apache is used on a Debian or Ubuntu linux
+#web_user: "www-data"
+
+# The linux group used by your webserver. The default value is "www-data" which assumes Apache is used on a Debian or Ubuntu linux
+#web_group: "www-data"
 
 
 
