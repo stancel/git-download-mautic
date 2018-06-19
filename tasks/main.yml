@@ -69,13 +69,18 @@
     option: max_execution_time
     value: 300
 
-# Do not adjust the timezone or the integrations have issues - Leaving this here as a reminder
-#- name: "Changing PHP ini file options"
-#  ini_file: 
-#    path: /etc/php/7.0/apache2/php.ini
-#    section: PHP
-#    option: date.timezone
-#    value: America/New_York
+# The timezone for PHP and for the OS need to be set to UTC for sync integrations to work properly
+- name: "Set timezone in PHP ini file"
+  ini_file: 
+    path: /etc/php/7.0/apache2/php.ini
+    section: PHP
+    option: date.timezone
+    value: UTC
+
+# The timezone for PHP and for the OS need to be set to UTC for sync integrations to work properly
+- name: 'Set Timezone to UTC'
+  timezone:
+    name: Etc/UTC
 
 - name: "Clearing out existing web directory"
   file: 
