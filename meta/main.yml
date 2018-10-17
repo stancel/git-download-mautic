@@ -1,6 +1,8 @@
 galaxy_info:
   author: 'Brad Stancel'
+  
   description: Downloads and installs a chosen release of Mautic to the default document root for the Apache webserver
+  
   company: YourOnlineDept.com
 
   license: GPLv3

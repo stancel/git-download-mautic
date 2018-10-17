@@ -1,20 +1,19 @@
 ---
-# defaults file for git-download-mautic
+# defaults file for git-download-mautic, will be used if any of these have been defined elsewhere
 
-# The default git repo to use when downloading and installing Mautic
+# The default git repo to use when downloading and installing the application
 git_repo: "https://github.com/mautic/mautic.git"
 
 # If you are using your own forked repo an want to use a branch instead of a tagged release then fill in a value and comment out the "tagged_release_version" variable 
 git_branch: ""
 
-# The database to create when setting up Mautic
+# The database to create when setting up the application
 db_name: "mautic"
 
-# Is this a Mautic Dev or Staging Environment? Cron jobs will not be setup for a Dev environment in case you are importing a database from production and do not want to sync your Mautic integrations from a DEV/QA environment to integrated production systems.
-mautic_dev_env: "no"
+# The Document Root or file path where the files will be stored and served up by your webserver. The default path is "/var/www/html" and assumes you are running Apache2 on Debian or Ubuntu
+web_files_path: "/var/www"
+web_directory_for_application: "/html"
 
-# The Document Root or file path where Mantis files will be stored and served up by your webserver. The default path is "/var/www/html" and assumes you are running Apache2 on Debian or Ubuntu
-web_files_path: "/var/www/html"
 
 # The linux username used by your webserver. The default value is "www-data" which assumes Apache is used on a Debian or Ubuntu linux
 web_user: "www-data"
@@ -22,9 +21,33 @@ web_user: "www-data"
 # The linux group used by your webserver. The default value is "www-data" which assumes Apache is used on a Debian or Ubuntu linux
 web_group: "www-data"
 
+# manage package with apt, you can disable the installation of package
+manage_packages: true
+
+# php.ini configurations flags, to allow or not the settings of these items, default is true, useful if your server is already setup with different values
+configure_mysqli_allow_local_infile: true
+configure_memory_limit: true
+configure_post_max_size: true
+configure_upload_max_filesize: true
+configure_max_input_time: true
+configure_max_execution_time: true
+configure_php_timezone: true
+
+# Install composer or not, default yes
+install_composer: true
+
+# Is this a "new", "upgrade" or "restore" installation? "new" and "upgrade" installs install files from Git, "restore" skips any git deployments and expect a later role to restore files to the needed directory.
+installation_type: "new"
+
+# Is this instance to be used for a "dev", "qa" or "prod" environment? Only "prod" environments will deploy any needed cron jobs or schedulers.
+environment_type: "prod"
+
 
 # Are you restoring your Mautic from another environment?
-#mautic_restore: "no"  - Not yet implemented
+#mautic_restore: "no"  - Not yet implemented / Probably will implement elsewhere
 
 # Do you want to deploy the FB Leads and FB Custom Audience plugins? (currently not working)
 #deploy_custom_plugins: "no" - Not yet implemented
+
+
+

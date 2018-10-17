@@ -6,7 +6,7 @@ Ansible role that downloads and installs a chosen release of Mautic to the defau
 Requirements
 ------------
 
-Need to already have MySQL / MariaDB / Percona Server and your webserver (Apache or Nginx) already setup and configured. The defaults assume a Debian based Linux (Ubuntu, Debian, etc.) with a default webserver document root of `/var/www/html` to install the SuiteCRM software. You can override those default variables if that is not the case.
+Need to already have MySQL / MariaDB / Percona Server and your webserver (Apache or Nginx) already setup and configured. The defaults assume a Debian based Linux (Ubuntu, Debian, etc.) with a default webserver document root of `/var/www/html` to install the Mautic software. You can override those default variables if that is not the case.
 
 Role Variables
 --------------
@@ -14,7 +14,7 @@ Role Variables
 Choose the git tagged release that you would like to download and install. No default value set.  
 
 ```
-	tagged_release_version: "2.13.1"
+	tagged_release_version: "2.14.1"
 ```
 The default git repo to use when downloading and installing Mautic. This is the default but can be changed if you have a forked/modified git repo that you would prefer to use.  
 
@@ -41,15 +41,22 @@ The password for the DB user being created. No default value set.
 ```
 	db_password: "some-really-secure-password"
 ```
-The root password for your MySQL, MariaDB or Percona Server DB instance to create the DB and user.  
+The root password for your MySQL, MariaDB or Percona Server DB instance to create the DB and user. No default set.
 
 ```
 	mysql_root_password: "your MySQL root password"
 ```
 The Document Root or file path where Mantis files will be stored and served up by your webserver. The default path is `/var/www/html` and assumes you are running Apache2 on Debian or Ubuntu.
 
+First part => *web_files_path:* is the root directory of your webserver
+
+Second part =>  *web_directory_for_application:* is the application directory inside the root directory
+
+!Be aware of the starting / !
+
 ```
-	web_files_path: "/var/www/html"
+    web_files_path: "/var/www"
+    web_directory_for_application: "/html"
 ```
 The linux username used by your webserver. The default value is `www-data` which assumes Apache is used on a Debian or Ubuntu linux.
 
@@ -61,11 +68,37 @@ The linux group used by your webserver. The default value is `www-data` which as
 ```
 	web_group: "www-data"
 ```
-Is this a Mautic Dev or Staging Environment? Cron jobs will not be setup for a Dev environment in case you are importing a database from production and do not want to sync your Mautic integrations from a DEV/QA environment to integrated production systems. The default is "no" 
+Manage package with apt, you can disable the installation of package
+```
+	manage_packages: true
+```
 
+The php.ini configurations, to allow or not the setting of these items, useful if your server is already setup with different values, default are true```
 ```
-	mautic_dev_env: "no"
+	configure_mysqli_allow_local_infile: true
+	configure_memory_limit: true
+	configure_post_max_size: true
+	configure_upload_max_filesize: true
+	configure_max_input_time: true
+	configure_max_execution_time: true
+	configure_php_timezone: true
 ```
+
+Install Composer or not, default is true, disable it if you already have composer installed
+```
+	install_composer: true
+```
+
+Is this a "new", "upgrade" or "restore" installation? "new" and "upgrade" installs install files from Git, "restore" skips any git deployments and expect a later role to restore files to the needed directory. Default is "new".
+```
+	installation_type: "new"
+```
+
+Is this instance to be used for a "dev", "qa" or "prod" environment? Only "prod" environments will deploy the SuiteCRM schedulers. Default is "prod".
+```
+	environment_type: "prod"
+```
+
 
 Dependencies
 ------------
@@ -79,7 +112,7 @@ Example Playbook
 	  vars_files:
 	    - vars/main.yml
 	  roles:
-	    - { role: stancel.git-download-mautic }
+	    - stancel.git-download-mautic 
 
 
 or 
@@ -87,12 +120,12 @@ or
 
 	- hosts: your_marketing_automation_server 
 	  vars:
-		tagged_release_version: "2.13.1"
+		tagged_release_version: "2.14.1"
 		db_user: "mauticDbUser"
 		db_password: "some-really-secure-password"
 		mysql_root_password: "your MySQL root password"
 	  roles:
-	    - { role: stancel.git-download-mautic }
+	    - stancel.git-download-mautic
 
 License
 -------
@@ -102,4 +135,6 @@ GPLv3
 Author Information
 ------------------
 
-Brad Stancel
+[Brad Stancel](https://github.com/stancel) 
+
+
