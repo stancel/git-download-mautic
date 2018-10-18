@@ -206,6 +206,7 @@
   composer: 
     command: install
     working_dir: "{{ web_files_path }}{{ web_directory_for_application }}"
+  when: (installation_type == "new" or installation_type == "upgrade")
   notify: finish-mautic-permissions
 
 # Will add this back in later after some fixes and testing - leaving it here for now
