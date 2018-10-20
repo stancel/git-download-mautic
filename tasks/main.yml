@@ -364,6 +364,16 @@
     recurse: yes
   when: (installation_type == "new" or installation_type == "upgrade")
 
+- name: "Ensure directories are 0755"
+  command: find {{ web_files_path }}{{ web_directory_for_application }} -type d -exec chmod -c 0755 {} \;
+  register: chmod_result
+  changed_when: "chmod_result.stdout != \"\""
+
+- name: "Ensure files are 0644"
+  command: find {{ web_files_path }}{{ web_directory_for_application }} -type f -exec chmod -c 0644 {} \;
+  register: chmod_result
+  changed_when: "chmod_result.stdout != \"\""
+
 - name: "Removing Git folder from web server permissions"
   file:
     path: "{{ web_files_path }}{{ web_directory_for_application }}/.git"
