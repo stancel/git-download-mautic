@@ -23,11 +23,11 @@
   - php7.0-gd
   notify: 
   - restart-apache
-  when: manage_packages
+  when: git_download_mautic_manage_packages
 
 - name: 'Upgrade APT to the lastest packages'
   action: apt upgrade=safe
-  when: manage_packages
+  when: git_download_mautic_manage_packages
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -35,7 +35,7 @@
     section: MySQLi
     option: mysqli.allow_local_infile
     value: 0
-  when: configure_mysqli_allow_local_infile
+  when: git_download_mautic_configure_mysqli_allow_local_infile
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -43,7 +43,7 @@
     section: PHP
     option: memory_limit
     value: 756M
-  when: configure_memory_limit
+  when: git_download_mautic_configure_memory_limit
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -51,7 +51,7 @@
     section: PHP
     option: post_max_size
     value: 64M
-  when: configure_post_max_size
+  when: git_download_mautic_configure_post_max_size
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -59,7 +59,7 @@
     section: PHP
     option: upload_max_filesize
     value: 64M
-  when: configure_upload_max_filesize
+  when: git_download_mautic_configure_upload_max_filesize
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -67,7 +67,7 @@
     section: PHP
     option: max_input_time
     value: 60
-  when: configure_max_input_time
+  when: git_download_mautic_configure_max_input_time
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -75,7 +75,7 @@
     section: PHP
     option: max_execution_time
     value: 300
-  when: configure_max_execution_time
+  when: git_download_mautic_configure_max_execution_time
 
 # The timezone for PHP and for the OS need to be set to UTC for sync integrations to work properly
 - name: "Set timezone in PHP ini file"
@@ -84,7 +84,7 @@
     section: PHP
     option: date.timezone
     value: UTC
-  when: configure_php_timezone
+  when: git_download_mautic_configure_php_timezone
 
 # The timezone for PHP and for the OS need to be set to UTC for sync integrations to work properly
 - name: 'Set Timezone to UTC'
@@ -92,71 +92,71 @@
     name: Etc/UTC
 
 - name: "Debugging the web files path variable"
-  debug: var=web_files_path
+  debug: var=git_download_mautic_web_files_path
 
 - name: "Debugging the web files path variable"
-  debug: var=web_directory_for_application
+  debug: var=git_download_mautic_web_directory_for_application
 
 
 - name: "Clearing out existing web/install directory"
   file: 
     state: absent 
-    path: "{{ web_files_path }}{{ web_directory_for_application }}"
+    path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
 
 - name: "Re-creating web/install directory"
   file:
-    path: "{{ web_files_path }}{{ web_directory_for_application }}"
+    path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
     state: directory
-    owner: "{{ web_user }}"
-    group: "{{ web_group }}"
+    owner: "{{ git_download_mautic_web_user }}"
+    group: "{{ git_download_mautic_web_group }}"
     mode: 0644
     recurse: yes
 
 - name: "Git clone the repo"
-  command: git clone {{ git_repo }} {{ web_files_path }}{{ web_directory_for_application }}
+  command: git clone {{ git_download_mautic_git_repo }} {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}
   args: 
-    chdir: "{{ web_files_path }}"
-  when: (installation_type == "new" or installation_type == "upgrade")
+    chdir: "{{ git_download_mautic_web_files_path }}"
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
-- name: "Debugging the git_branch variable"
-  debug: var=git_branch
+- name: "Debugging the git_download_mautic_git_branch variable"
+  debug: var=git_download_mautic_git_branch
 
-- name: "Debugging the tagged_release_version variable"
-  debug: var=tagged_release_version
+- name: "Debugging the git_download_mautic_tagged_release_version variable"
+  debug: var=git_download_mautic_tagged_release_version
 
 - name: "Checkout the desired release"
-  command: git checkout {{ tagged_release_version }}
+  command: git checkout {{ git_download_mautic_tagged_release_version }}
   args: 
-    chdir: "{{ web_files_path }}{{ web_directory_for_application }}"
-  when: (tagged_release_version != "") and 
-          (installation_type == "new" or installation_type == "upgrade")
+    chdir: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
+  when: (git_download_mautic_tagged_release_version != "") and 
+          (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
 - name: "Checkout the desired branch"
-  command: git checkout {{ git_branch }}
+  command: git checkout {{ git_download_mautic_git_branch }}
   args: 
-    chdir: "{{ web_files_path }}{{ web_directory_for_application }}"
-  when: (git_branch != "") and 
-          (installation_type == "new" or installation_type == "upgrade")
+    chdir: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
+  when: (git_download_mautic_git_branch != "") and 
+          (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
 - name: "Install Python MySQL bindings required for Ansible MySQL module"
   apt: 
     name: python-mysqldb 
     state: present
 
-- name: "MYSQL | Create {{db_name}} database"
+- name: "MYSQL | Create {{git_download_mautic_db_name}} database"
   mysql_db:
-    name: "{{ db_name }}"
-    login_password: "{{ mysql_root_password }}"
+    name: "{{ git_download_mautic_db_name }}"
+    login_password: "{{ git_download_mautic_mysql_root_password }}"
     state: present
     collation: "utf8_unicode_ci"
 
-- name: "MYSQL | Create {{db_name}} user"
+- name: "MYSQL | Create {{git_download_mautic_db_name}} user"
   mysql_user:
-    login_password: "{{ mysql_root_password }}"
-    name: "{{ db_user }}"
-    password: "{{ db_password }}"
+    login_password: "{{ git_download_mautic_mysql_root_password }}"
+    name: "{{ git_download_mautic_db_user }}"
+    password: "{{ git_download_mautic_db_password }}"
     host: '%'
-    priv: '{{ db_name }}.*:TRIGGER,CREATE ROUTINE,CREATE TEMPORARY TABLES,CREATE VIEW,ALTER ROUTINE,REFERENCES,EVENT,SHOW VIEW,EXECUTE,ALTER,DROP,CREATE,INDEX,SELECT,INSERT,UPDATE,DELETE'
+    priv: '{{ git_download_mautic_db_name }}.*:TRIGGER,CREATE ROUTINE,CREATE TEMPORARY TABLES,CREATE VIEW,ALTER ROUTINE,REFERENCES,EVENT,SHOW VIEW,EXECUTE,ALTER,DROP,CREATE,INDEX,SELECT,INSERT,UPDATE,DELETE'
     state: present
 
 - name: "Create and set a swap file if one is not set. Mautic composer sometimes has problems otherwise"
@@ -200,13 +200,13 @@
   script: ../files/install_composer.sh
   args: 
     creates: /usr/local/bin/composer
-  when: install_composer
+  when: git_download_mautic_install_composer
 
 - name: "Install Composer packages"
   composer: 
     command: install
-    working_dir: "{{ web_files_path }}{{ web_directory_for_application }}"
-  when: (installation_type == "new" or installation_type == "upgrade")
+    working_dir: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
   notify: finish-mautic-permissions
 
 # Will add this back in later after some fixes and testing - leaving it here for now
@@ -215,139 +215,139 @@
 #    - name: "Deploy FB Ads to Leads Mautic Plugin"
 #      git:
 #        repo: 'https://github.com/stancel/MauticFBAdsCustomAudiencesBundle.git'
-#        dest: {{ web_files_path }}{{ web_directory_for_application }}/plugins/MauticFBAdsCustomAudiencesBundle
+#        dest: {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/plugins/MauticFBAdsCustomAudiencesBundle
 #        version: master
 #
 #    - name: "Deploy FB Ads to Leads Mautic Plugin"
 #      git:
 #        repo: 'https://github.com/stancel/MauticFBAdsLeadAdsBundle.git'
-#        dest: {{ web_files_path }}{{ web_directory_for_application }}/plugins/MauticFBAdsLeadAdsBundle
+#        dest: {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/plugins/MauticFBAdsLeadAdsBundle
 #        version: master
 #
-#  when: deploy_custom_plugins == "yes"
+#  when: git_download_mautic_deploy_custom_plugins == "yes"
 
 - name: "Block to create/set cron jobs needed by Mautic if it is a Production environment being setup"
   block:
     - name: "Setup cron job for Processing Mautic Webhooks"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:webhooks:process"
         minute: "0,10,20,30,40,50"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:webhooks:process > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:webhooks:process > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Segment Updates"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:segments:update"
         minute: "2,12,22,32,42,52"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:segments:update > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:segments:update > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Campaigns"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:campaigns:rebuild"
         minute: "4,14,24,34,44,54"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:campaigns:rebuild > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:campaigns:rebuild > /dev/null 2>&1"
 
     - name: "Setup cron job for Triggering Mautic Campaigns"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:campaigns:trigger"
         minute: "6,16,26,36,46,56"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:campaigns:trigger > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:campaigns:trigger > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Sending Emails"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:emails:send"
         minute: "1,11,21,31,41,51"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:emails:send > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:emails:send > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Fetching Emails"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:email:fetch"
         minute: "3,13,23,33,44,54"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:email:fetch > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:email:fetch > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Social Monitoring"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:social:monitoring"
         minute: "2,12,22,32,42,52"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:social:monitoring > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:social:monitoring > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic IP Lookup Download"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:iplookup:download"
         minute: "5,15,25,35,45,55"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:iplookup:download > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:iplookup:download > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Maintenance Cleanup"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:maintenance:cleanup"
         minute: "0"
         hour: "2"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:maintenance:cleanup --days-old=365 > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:maintenance:cleanup --days-old=365 > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Send Broadcasts"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "mautic:broadcasts:send"
         minute: "7,17,27,37,47,57"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:broadcasts:send > /dev/null 2>&1"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:broadcasts:send > /dev/null 2>&1"
 
     - name: "Setup cron job for Mautic Fetching SuiteCRM Leads"
       cron:
-        user: "{{ web_user }}"
+        user: "{{ git_download_mautic_web_user }}"
         name: "Fetch Sugarcrm Leads"
         minute: "*"
         hour: "*"
         day: "*"
         month: "*"
         weekday: "*"
-        job: "php {{ web_files_path }}{{ web_directory_for_application }}/app/console mautic:integration:fetchleads --integration=Sugarcrm"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:integration:fetchleads --integration=Sugarcrm"
     
   # Only execute the above task block to setup cron jobs if it is a PROD environment 
   when: environment_type == "prod"
@@ -356,42 +356,42 @@
 # Finalizing Deployment - Setting Permissions
 - name: "Setting ownership and permissions for web directory"
   file:
-    path: "{{ web_files_path }}{{ web_directory_for_application }}"
+    path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
     state: directory
-    owner: "{{ web_user }}"
-    group: "{{ web_group }}"
+    owner: "{{ git_download_mautic_web_user }}"
+    group: "{{ git_download_mautic_web_group }}"
     mode: 0755
     recurse: yes
-  when: (installation_type == "new" or installation_type == "upgrade")
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
 - name: "Ensure directories are 0755"
-  command: find {{ web_files_path }}{{ web_directory_for_application }} -type d -exec chmod -c 0755 {} \;
+  command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type d -exec chmod -c 0755 {} \;
   register: chmod_result
   changed_when: "chmod_result.stdout != \"\""
 
 - name: "Ensure files are 0644"
-  command: find {{ web_files_path }}{{ web_directory_for_application }} -type f -exec chmod -c 0644 {} \;
+  command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type f -exec chmod -c 0644 {} \;
   register: chmod_result
   changed_when: "chmod_result.stdout != \"\""
 
 - name: "Removing Git folder from web server permissions"
   file:
-    path: "{{ web_files_path }}{{ web_directory_for_application }}/.git"
+    path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/.git"
     state: directory
     owner: root
     group: root
     mode: 0640
     recurse: yes
-  when: (installation_type == "new" or installation_type == "upgrade")
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
 - name: "Removing .gitignore from web server permissions"
   file:
-    path: "{{ web_files_path }}{{ web_directory_for_application }}/.gitignore"
+    path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/.gitignore"
     state: file
     owner: root
     group: root
     mode: 0640
-  when: (installation_type == "new" or installation_type == "upgrade")
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
   notify: finish-mautic-permissions
 
 # Need to consider moving this to a separate deployment role
@@ -399,11 +399,11 @@
 #- name: "Deploying Mautic Config Script with Settings"
 #  template:
 #    src: ../templates/local.php
-#    dest: {{ web_files_path }}{{ web_directory_for_application }}/app/config/local.php
-#    owner: "{{ web_user }}"
-#    group: "{{ web_group }}"
+#    dest: {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/config/local.php
+#    owner: "{{ git_download_mautic_web_user }}"
+#    group: "{{ git_download_mautic_web_group }}"
 #    mode: 0644
-#  when: mautic_restore == "yes"
+#  when: git_download_mautic_mautic_restore == "yes"
 
 
 

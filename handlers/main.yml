@@ -9,25 +9,25 @@
 - name: "Clear-mautic-cache"
   become: true
   become_method: sudo
-  shell: "rm -rf {{ web_files_path }}{{ web_directory_for_application }}/app/cache/*"
+  shell: "rm -rf {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/cache/*"
   listen: "finish-mautic-permissions"
 
 - name: "Set ownership to Apache webuser"
   become: true
   become_method: sudo
-  shell: "chown -R {{ web_user }}:{{ web_group }} {{ web_files_path }}{{ web_directory_for_application }}"
+  shell: "chown -R {{ git_download_mautic_web_user }}:{{ git_download_mautic_web_group }} {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
   listen: "finish-mautic-permissions"
 
 - name: "Set ownership to root for Git files and directory"
   become: true
   become_method: sudo
-  shell: "chown -R root:root {{ web_files_path }}{{ web_directory_for_application }}/.git {{ web_files_path }}{{ web_directory_for_application }}/.github {{ web_files_path }}{{ web_directory_for_application }}/.gitignore"
+  shell: "chown -R root:root {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/.git {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/.github {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/.gitignore"
   listen: "finish-mautic-permissions"
 
 - name: "Make Mautic Cache writable and executable"
   become: true
   become_method: sudo
-  shell: "chmod -R 755 {{ web_files_path }}{{ web_directory_for_application }}/app/cache"
+  shell: "chmod -R 755 {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/cache"
   listen: "finish-mautic-permissions"
 
 - name: "Restart Apache for good measure"
