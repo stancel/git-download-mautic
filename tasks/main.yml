@@ -226,10 +226,11 @@
 #
 #  when: git_download_mautic_deploy_custom_plugins == "yes"
 
-- name: "Block to create/set cron jobs needed by Mautic if it is a Production environment being setup"
+- name: "Remove cron jobs/schedulers needed by Mautic if it is not a Production environment"
   block:
     - name: "Setup cron job for Processing Mautic Webhooks"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:webhooks:process"
         minute: "0,10,20,30,40,50"
@@ -241,6 +242,7 @@
 
     - name: "Setup cron job for Mautic Segment Updates"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:segments:update"
         minute: "2,12,22,32,42,52"
@@ -252,6 +254,7 @@
 
     - name: "Setup cron job for Mautic Campaigns"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:campaigns:rebuild"
         minute: "4,14,24,34,44,54"
@@ -263,6 +266,7 @@
 
     - name: "Setup cron job for Triggering Mautic Campaigns"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:campaigns:trigger"
         minute: "6,16,26,36,46,56"
@@ -274,6 +278,7 @@
 
     - name: "Setup cron job for Mautic Sending Emails"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:emails:send"
         minute: "1,11,21,31,41,51"
@@ -285,6 +290,7 @@
 
     - name: "Setup cron job for Mautic Fetching Emails"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:email:fetch"
         minute: "3,13,23,33,44,54"
@@ -296,6 +302,7 @@
 
     - name: "Setup cron job for Mautic Social Monitoring"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:social:monitoring"
         minute: "2,12,22,32,42,52"
@@ -307,6 +314,7 @@
 
     - name: "Setup cron job for Mautic IP Lookup Download"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:iplookup:download"
         minute: "5,15,25,35,45,55"
@@ -318,6 +326,7 @@
 
     - name: "Setup cron job for Mautic Maintenance Cleanup"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:maintenance:cleanup"
         minute: "0"
@@ -329,6 +338,7 @@
 
     - name: "Setup cron job for Mautic Send Broadcasts"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "mautic:broadcasts:send"
         minute: "7,17,27,37,47,57"
@@ -340,6 +350,7 @@
 
     - name: "Setup cron job for Mautic Fetching SuiteCRM Leads"
       cron:
+        state: absent
         user: "{{ git_download_mautic_web_user }}"
         name: "Fetch Sugarcrm Leads"
         minute: "*"
@@ -350,7 +361,145 @@
         job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:integration:fetchleads --integration=Sugarcrm"
     
   # Only execute the above task block to setup cron jobs if it is a PROD environment 
-  when: environment_type == "prod"
+  when: (git_download_mautic_environment_type == "dev" or git_download_mautic_environment_type == "qa")
+
+
+- name: "Create/set cron jobs needed by Mautic if it IS a Production environment"
+  block:
+    - name: "Setup cron job for Processing Mautic Webhooks"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:webhooks:process"
+        minute: "0,10,20,30,40,50"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:webhooks:process > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Segment Updates"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:segments:update"
+        minute: "2,12,22,32,42,52"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:segments:update > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Campaigns"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:campaigns:rebuild"
+        minute: "4,14,24,34,44,54"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:campaigns:rebuild > /dev/null 2>&1"
+
+    - name: "Setup cron job for Triggering Mautic Campaigns"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:campaigns:trigger"
+        minute: "6,16,26,36,46,56"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:campaigns:trigger > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Sending Emails"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:emails:send"
+        minute: "1,11,21,31,41,51"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:emails:send > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Fetching Emails"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:email:fetch"
+        minute: "3,13,23,33,44,54"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:email:fetch > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Social Monitoring"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:social:monitoring"
+        minute: "2,12,22,32,42,52"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:social:monitoring > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic IP Lookup Download"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:iplookup:download"
+        minute: "5,15,25,35,45,55"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:iplookup:download > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Maintenance Cleanup"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:maintenance:cleanup"
+        minute: "0"
+        hour: "2"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:maintenance:cleanup --days-old=365 > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Send Broadcasts"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "mautic:broadcasts:send"
+        minute: "7,17,27,37,47,57"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:broadcasts:send > /dev/null 2>&1"
+
+    - name: "Setup cron job for Mautic Fetching SuiteCRM Leads"
+      cron:
+        state: present
+        user: "{{ git_download_mautic_web_user }}"
+        name: "Fetch Sugarcrm Leads"
+        minute: "*"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: "php {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/console mautic:integration:fetchleads --integration=Sugarcrm"
+    
+  # Only execute the above task block to setup cron jobs if it is a PROD environment 
+  when: git_download_mautic_environment_type == "prod"
 
 
 # Finalizing Deployment - Setting Permissions
