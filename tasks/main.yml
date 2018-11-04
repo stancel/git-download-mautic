@@ -1,6 +1,9 @@
 ---
 # tasks file for git-download-mautic
 
+
+##  Handle any dependencies
+
 - name: "Install Git and other needed packages"
   package: name={{ item }} 
   with_items: 
@@ -25,9 +28,57 @@
   - restart-apache
   when: git_download_mautic_manage_packages
 
-- name: 'Upgrade APT to the lastest packages'
+- name: 'Upgrade APT to the latest packages'
   action: apt upgrade=safe
   when: git_download_mautic_manage_packages
+
+- name: "Create and set a swap file if one is not set. Mautic composer sometimes has problems otherwise"
+  block:
+
+    - name: Create swap directory
+      command: mkdir -p /extraswap
+
+    - name: Create swap space
+      command: dd if=/dev/zero of=swapfile bs=1M count=2000
+      args:
+        chdir: /extraswap
+
+    - name: Create swap space
+      command: mkswap swapfile
+      args:
+        chdir: /extraswap
+
+    - name: Turn swap on
+      command: swapon swapfile
+      args:
+        chdir: /extraswap
+
+    - name: Set swap file permission
+      command: chmod 600 swapfile
+      args:
+        chdir: /extraswap
+
+    - name: Add to fstab
+      action: lineinfile dest=/etc/fstab regexp="swapfile" line="/extraswap/swapfile none swap sw 0 0" state=present
+
+    - name: Set swapiness
+      sysctl:
+        name: vm.swappiness
+        value: "1" 
+
+  # Only execute if the swap is not already setup
+  when: ansible_swaptotal_mb < 1
+
+- name: "Install Composer program"
+  script: ../files/install_composer.sh
+  args: 
+    creates: /usr/local/bin/composer
+  when: git_download_mautic_install_composer
+
+##  End - Handle any dependencies
+
+
+##  Set needed PHP configuration
 
 - name: "Changing PHP ini file options"
   ini_file: 
@@ -77,6 +128,11 @@
     value: 300
   when: git_download_mautic_configure_max_execution_time
 
+##  End - Set needed PHP configuration
+
+
+##  Set Timezone on Server (if required)
+
 # The timezone for PHP and for the OS need to be set to UTC for sync integrations to work properly
 - name: "Set timezone in PHP ini file"
   ini_file: 
@@ -91,12 +147,16 @@
   timezone:
     name: Etc/UTC
 
+##  End Set Timezone on Server (if required)
+
+
+##  Prepping directory for web application / site
+
 - name: "Debugging the web files path variable"
   debug: var=git_download_mautic_web_files_path
 
 - name: "Debugging the web files path variable"
   debug: var=git_download_mautic_web_directory_for_application
-
 
 - name: "Clearing out existing web/install directory"
   file: 
@@ -111,6 +171,11 @@
     group: "{{ git_download_mautic_web_group }}"
     mode: 0644
     recurse: yes
+
+##  End - Prepping directory for web application / site
+
+
+##  Deploy files from Git repo
 
 - name: "Git clone the repo"
   command: git clone {{ git_download_mautic_git_repo }} {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}
@@ -138,6 +203,11 @@
   when: (git_download_mautic_git_branch != "") and 
           (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
+##  End - Deploy files from Git repo
+
+
+##  Create and/or handle any DB related tasks
+
 - name: "Install Python MySQL bindings required for Ansible MySQL module"
   apt: 
     name: python-mysqldb 
@@ -159,55 +229,10 @@
     priv: '{{ git_download_mautic_db_name }}.*:TRIGGER,CREATE ROUTINE,CREATE TEMPORARY TABLES,CREATE VIEW,ALTER ROUTINE,REFERENCES,EVENT,SHOW VIEW,EXECUTE,ALTER,DROP,CREATE,INDEX,SELECT,INSERT,UPDATE,DELETE'
     state: present
 
-- name: "Create and set a swap file if one is not set. Mautic composer sometimes has problems otherwise"
-  block:
+##  End - Create and/or handle any DB related tasks
 
-    - name: Create swap directory
-      command: mkdir -p /extraswap
 
-    - name: Create swap space
-      command: dd if=/dev/zero of=swapfile bs=1M count=2000
-      args:
-        chdir: /extraswap
-
-    - name: Create swap space
-      command: mkswap swapfile
-      args:
-        chdir: /extraswap
-
-    - name: Turn swap on
-      command: swapon swapfile
-      args:
-        chdir: /extraswap
-
-    - name: Set swap file permission
-      command: chmod 600 swapfile
-      args:
-        chdir: /extraswap
-
-    - name: Add to fstab
-      action: lineinfile dest=/etc/fstab regexp="swapfile" line="/extraswap/swapfile none swap sw 0 0" state=present
-
-    - name: Set swapiness
-      sysctl:
-        name: vm.swappiness
-        value: "1" 
-
-  # Only execute if the swap is not already setup
-  when: ansible_swaptotal_mb < 1
-
-- name: "Install Composer program"
-  script: ../files/install_composer.sh
-  args: 
-    creates: /usr/local/bin/composer
-  when: git_download_mautic_install_composer
-
-- name: "Install Composer packages"
-  composer: 
-    command: install
-    working_dir: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
-  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
-  notify: finish-mautic-permissions
+##  Handle any template files and schedulers/cron jobs
 
 # Will add this back in later after some fixes and testing - leaving it here for now
 #- block:
@@ -225,6 +250,17 @@
 #        version: master
 #
 #  when: git_download_mautic_deploy_custom_plugins == "yes"
+
+# Need to consider moving this to a separate deployment role
+# Removing this temporarily since the local.php file has confidential data in it
+#- name: "Deploying Mautic Config Script with Settings"
+#  template:
+#    src: ../templates/local.php
+#    dest: {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/config/local.php
+#    owner: "{{ git_download_mautic_web_user }}"
+#    group: "{{ git_download_mautic_web_group }}"
+#    mode: 0644
+#  when: git_download_mautic_mautic_restore == "yes"
 
 - name: "Remove cron jobs/schedulers needed by Mautic if it is not a Production environment"
   block:
@@ -501,17 +537,32 @@
   # Only execute the above task block to setup cron jobs if it is a PROD environment 
   when: git_download_mautic_environment_type == "prod"
 
+##  End - Handle any template files and schedulers/cron jobs
 
-# Finalizing Deployment - Setting Permissions
-- name: "Setting ownership and permissions for web directory"
+
+##  Trigger any application / site specific deployment tasks (if not handled elsewhere)
+
+- name: "Install Composer packages"
+  composer: 
+    command: install
+    working_dir: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
+  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
+  notify: finish-mautic-permissions
+
+##  End - Trigger any application / site specific deployment tasks
+
+
+##  Set proper permissions for web application / site
+
+- name: "Setting ownership and permissions for web directory - make sure all new files and directories inherit the group of the webserver"
   file:
     path: "{{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
     state: directory
     owner: "{{ git_download_mautic_web_user }}"
     group: "{{ git_download_mautic_web_group }}"
-    mode: 0755
+    mode: g+s
     recurse: yes
-  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
+#  when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
 
 - name: "Ensure directories are 0755"
   command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type d -exec chmod -c 0755 {} \;
@@ -520,6 +571,17 @@
 
 - name: "Ensure files are 0644"
   command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type f -exec chmod -c 0644 {} \;
+  register: chmod_result
+  changed_when: "chmod_result.stdout != \"\""
+
+# These next two tasks should be covered above but leaving them in right now for good measure
+- name: "Set user and group ownership for all existing files and directories"
+  command: chown -R {{ git_download_mautic_web_user }}:{{ git_download_mautic_web_group }} {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}
+  register: chmod_result
+  changed_when: "chmod_result.stdout != \"\""
+
+- name: "Ensure newly created directories and files have a group of {{ git_download_suitecrm_web_group }}"
+  command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type d -exec chmod g+s {} \;
   register: chmod_result
   changed_when: "chmod_result.stdout != \"\""
 
@@ -543,25 +605,6 @@
   when: (git_download_mautic_installation_type == "new" or git_download_mautic_installation_type == "upgrade")
   notify: finish-mautic-permissions
 
-# Need to consider moving this to a separate deployment role
-# Removing this temporarily since the local.php file has confidential data in it
-#- name: "Deploying Mautic Config Script with Settings"
-#  template:
-#    src: ../templates/local.php
-#    dest: {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/config/local.php
-#    owner: "{{ git_download_mautic_web_user }}"
-#    group: "{{ git_download_mautic_web_group }}"
-#    mode: 0644
-#  when: git_download_mautic_mautic_restore == "yes"
-
-
-
-
-
-
-
-
-
-
+##  End - Set proper permissions for web application / site
 
 
