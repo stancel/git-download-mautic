@@ -580,7 +580,7 @@
   register: chmod_result
   changed_when: "chmod_result.stdout != \"\""
 
-- name: "Ensure newly created directories and files have a group of {{ git_download_suitecrm_web_group }}"
+- name: "Ensure newly created directories and files have a group of {{ git_download_mautic_web_group }}"
   command: find {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }} -type d -exec chmod g+s {} \;
   register: chmod_result
   changed_when: "chmod_result.stdout != \"\""
