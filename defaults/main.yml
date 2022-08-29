@@ -1,8 +1,11 @@
 ---
 # defaults file for git-download-mautic, will be used if any of these have been defined elsewhere
 
+# PHP Version to use (default currently 7.4)
+git_download_mautic_php_version: 7.4
+
 # The default git repo to use when downloading and installing the application
-git_download_mautic_git_repo: "https://github.com/mautic/mautic.git"
+git_download_mautic_git_repo: "git@github.com:mautic/mautic.git"
 
 # If you are using your own forked repo an want to use a branch instead of a tagged release then fill in a value and comment out the "tagged_release_version" variable 
 git_download_mautic_git_branch: ""
@@ -41,10 +44,6 @@ git_download_mautic_installation_type: "new"
 
 # Is this instance to be used for a "dev", "qa" or "prod" environment? Only "prod" environments will deploy any needed cron jobs or schedulers.
 git_download_mautic_environment_type: "prod"
-
-
-# Are you restoring your Mautic from another environment?
-#git_download_mautic_mautic_restore: "no"  - Not yet implemented / Probably will implement elsewhere
 
 # Do you want to deploy the FB Leads and FB Custom Audience plugins? (currently not working)
 #git_download_mautic_deploy_custom_plugins: "no" - Not yet implemented

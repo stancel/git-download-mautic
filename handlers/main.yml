@@ -1,10 +1,21 @@
 ---
 # handlers file for git-download-mautic
 
-- name: restart-apache
+- name: "restart-apache"
+  become: true
   service: 
     name: apache2 
     state: restarted
+  ignore_errors: true
+  listen: "restart webserver"
+
+- name: "restart nginx"
+  become: true
+  service: 
+    name: nginx 
+    state: restarted
+  ignore_errors: true
+  listen: "restart webserver"
 
 - name: "Clear-mautic-cache"
   become: true
@@ -12,7 +23,7 @@
   shell: "rm -rf {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}/app/cache/*"
   listen: "finish-mautic-permissions"
 
-- name: "Set ownership to Apache webuser"
+- name: "Set ownership to Webserver webuser"
   become: true
   become_method: sudo
   shell: "chown -R {{ git_download_mautic_web_user }}:{{ git_download_mautic_web_group }} {{ git_download_mautic_web_files_path }}{{ git_download_mautic_web_directory_for_application }}"
@@ -32,10 +43,18 @@
 
 - name: "Restart Apache for good measure"
   become: true
-  become_method: sudo
   service: 
     name: apache2 
     state: restarted
+  ignore_errors: true
+  listen: "finish-mautic-permissions"
+
+- name: "Restart Nginx for good measure"
+  become: true
+  service: 
+    name: nginx 
+    state: restarted
+  ignore_errors: true
   listen: "finish-mautic-permissions"
 
 
